@@ -1,126 +1,283 @@
-<!-- Create www/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C++ HTTP Server</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f5f5f5;
-        }
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            border-bottom: 2px solid #4CAF50;
-            padding-bottom: 10px;
-        }
-        .feature {
-            background: #f9f9f9;
-            padding: 15px;
-            margin: 10px 0;
-            border-left: 4px solid #4CAF50;
-        }
-        .test-form {
-            margin: 20px 0;
-            padding: 20px;
-            background: #e8f5e9;
-            border-radius: 5px;
-        }
-        input, textarea {
-            width: 100%;
-            padding: 10px;
-            margin: 5px 0;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        button {
-            background: #4CAF50;
-            color: white;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #45a049;
-        }
-    </style>
+    <title>C++ HTTP Server Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="container">
-        <h1>🚀 C++ HTTP Server</h1>
-        <p>This page is being served by a custom HTTP server written entirely in C++!</p>
-        
-        <div class="feature">
-            <h3>✨ Features</h3>
-            <ul>
-                <li>Multi-threaded request handling</li>
-                <li>Static file serving</li>
-                <li>GET, POST, HEAD methods support</li>
-                <li>Directory listing (configurable)</li>
-                <li>MIME type detection</li>
-                <li>Logging system</li>
-                <li>Configurable via file or command line</li>
-            </ul>
-        </div>
-        
-        <div class="test-form">
-            <h3>🔧 Test POST Request</h3>
-            <form id="testForm">
-                <input type="text" id="name" placeholder="Enter your name">
-                <textarea id="message" placeholder="Enter a message" rows="3"></textarea>
-                <button type="submit">Send Test POST</button>
-            </form>
-            <div id="result"></div>
-        </div>
-        
-        <div class="feature">
-            <h3>📁 Directory Contents</h3>
-            <ul>
-                <li><a href="/">Home</a></li>
-                <li><a href="/test.txt">Test Text File</a></li>
-                <li><a href="/api/test">Test API Endpoint</a></li>
-            </ul>
-        </div>
-        
-        <footer>
-            <p>Server time: <span id="time"></span></p>
-            <p><small>Built with C++17, sockets, and multithreading</small></p>
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <h1>C++ HTTP Server</h1>
+            </div>
+            <p class="tagline">High-performance web server built from scratch in C++</p>
+            <div class="server-status">
+                <span class="status-indicator pulse" style="color: #10b981;">
+                    <i class="fas fa-circle"></i> Server Running
+                </span>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="hero fade-in">
+            <h2>🚀 Welcome to Your Custom HTTP Server</h2>
+            <p>This entire page is being served by a multi-threaded HTTP server written in pure C++17</p>
+            <div class="btn-group">
+                <a href="#features" class="btn btn-secondary">
+                    <i class="fas fa-star"></i> Features
+                </a>
+                <a href="#test" class="btn btn-primary">
+                    <i class="fas fa-vial"></i> Test API
+                </a>
+                <a href="/test.txt" class="btn btn-secondary">
+                    <i class="fas fa-file-alt"></i> Sample File
+                </a>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <main class="main-content fade-in">
+            <!-- Features Section -->
+            <section id="features" class="mb-lg">
+                <h2 class="text-center mb-lg">
+                    <i class="fas fa-cogs"></i> Server Features
+                </h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <h3>High Performance</h3>
+                        <p>Multi-threaded architecture for handling concurrent connections efficiently.</p>
+                        <ul class="feature-list">
+                            <li>Thread pool implementation</li>
+                            <li>Non-blocking I/O</li>
+                            <li>Connection pooling</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h3>Secure & Robust</h3>
+                        <p>Built with security and reliability in mind.</p>
+                        <ul class="feature-list">
+                            <li>Path traversal protection</li>
+                            <li>Input sanitization</li>
+                            <li>Error handling</li>
+                            <li>Logging system</li>
+                        </ul>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">
+                            <i class="fas fa-code"></i>
+                        </div>
+                        <h3>HTTP/1.1 Compliant</h3>
+                        <p>Full support for HTTP/1.1 protocol features.</p>
+                        <ul class="feature-list">
+                            <li>GET, POST, HEAD methods</li>
+                            <li>MIME type detection</li>
+                            <li>Keep-alive connections</li>
+                            <li>Chunked transfer encoding</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Server Info -->
+            <section class="server-info mb-lg">
+                <h2 class="text-center mb-lg">
+                    <i class="fas fa-info-circle"></i> Server Information
+                </h2>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-microchip"></i>
+                        </div>
+                        <h4>Threads</h4>
+                        <div class="info-value">4</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <h4>Port</h4>
+                        <div class="info-value">8080</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                        <h4>Web Root</h4>
+                        <div class="info-value">./www</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <h4>Uptime</h4>
+                        <div class="info-value">00:05:23</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- API Testing Section -->
+            <section id="test" class="api-testing mb-lg">
+                <h2>
+                    <i class="fas fa-vial"></i> API Testing Console
+                </h2>
+                <div class="test-grid">
+                    <div class="test-card">
+                        <h3>
+                            <i class="fas fa-download test-icon"></i>
+                            GET Request
+                        </h3>
+                        <p>Test file retrieval and directory browsing</p>
+                        <div class="btn-group">
+                            <button onclick="testGet('/')" class="btn btn-secondary">
+                                Home Page
+                            </button>
+                            <button onclick="testGet('/test.txt')" class="btn btn-secondary">
+                                Text File
+                            </button>
+                            <button onclick="testGet('/api/status')" class="btn btn-secondary">
+                                Server Status
+                            </button>
+                        </div>
+                        <div id="get-response" class="response-display hidden"></div>
+                    </div>
+
+                    <div class="test-card">
+                        <h3>
+                            <i class="fas fa-upload test-icon"></i>
+                            POST Request
+                        </h3>
+                        <p>Send data to the server for processing</p>
+                        <div class="form-group">
+                            <label for="postData">JSON Data:</label>
+                            <textarea id="postData" class="form-control" rows="3" placeholder='{"message": "Hello Server!"}'>{"test": "data", "timestamp": "now"}</textarea>
+                        </div>
+                        <button onclick="testPost()" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Send POST
+                        </button>
+                        <div id="post-response" class="response-display hidden"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Directory Browser -->
+            <section class="directory-browser mb-lg">
+                <h2>
+                    <i class="fas fa-folder-open"></i> Directory Browser
+                </h2>
+                <p>Browse files served by the HTTP server:</p>
+                <ul class="file-list" id="fileList">
+                    <!-- Files will be loaded dynamically -->
+                </ul>
+                <div class="text-center mt-md">
+                    <button onclick="loadDirectory()" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i> Refresh Directory
+                    </button>
+                </div>
+            </section>
+
+            <!-- Terminal Demo -->
+            <section class="terminal-demo mb-lg">
+                <div class="terminal-header">
+                    <div class="terminal-buttons">
+                        <div class="terminal-button close"></div>
+                        <div class="terminal-button minimize"></div>
+                        <div class="terminal-button maximize"></div>
+                    </div>
+                    <div class="terminal-title">terminal — curl commands</div>
+                </div>
+                <div class="terminal-content">
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span class="terminal-command"> curl -X GET http://localhost:8080/</span>
+                    </div>
+                    <div class="terminal-output">200 OK - Returns HTML page</div>
+                    
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span class="terminal-command"> curl -X POST http://localhost:8080/api/test -d '{"name":"test"}'</span>
+                    </div>
+                    <div class="terminal-output">200 OK - {"status": "received"}</div>
+                    
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span class="terminal-command"> curl -I http://localhost:8080/test.txt</span>
+                    </div>
+                    <div class="terminal-output">200 OK - Content-Type: text/plain</div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer fade-in">
+            <div class="tech-stack">
+                <span class="tech-item">C++17</span>
+                <span class="tech-item">Sockets</span>
+                <span class="tech-item">Multithreading</span>
+                <span class="tech-item">HTTP/1.1</span>
+                <span class="tech-item">Filesystem</span>
+            </div>
+            <p class="copyright">
+                <i class="far fa-copyright"></i> 2024 C++ HTTP Server Project
+                | Built for educational purposes
+                | <span id="serverTime"></span>
+            </p>
+            <p class="mt-sm">
+                <small>
+                    <i class="fas fa-code-branch"></i>
+                    Server version 1.0.0 | Uptime: <span id="uptimeCounter">00:00:00</span>
+                </small>
+            </p>
         </footer>
     </div>
-    
+
+    <script src="script.js"></script>
     <script>
-        document.getElementById('time').textContent = new Date().toLocaleString();
+        // Initialize uptime counter
+        let uptimeSeconds = 0;
+        function updateUptime() {
+            uptimeSeconds++;
+            const hours = Math.floor(uptimeSeconds / 3600).toString().padStart(2, '0');
+            const minutes = Math.floor((uptimeSeconds % 3600) / 60).toString().padStart(2, '0');
+            const seconds = (uptimeSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('uptimeCounter').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateUptime, 1000);
         
-        document.getElementById('testForm').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            const name = document.getElementById('name').value;
-            const message = document.getElementById('message').value;
-            
-            const response = await fetch('/api/test', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, message })
-            });
-            
-            const result = await response.text();
-            document.getElementById('result').innerHTML = `
-                <strong>Response:</strong><br>
-                <pre>${result}</pre>
-            `;
-        });
+        // Update server time
+        function updateServerTime() {
+            const now = new Date();
+            document.getElementById('serverTime').textContent = 
+                now.toLocaleString('en-US', { 
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    timeZoneName: 'short'
+                });
+        }
+        setInterval(updateServerTime, 1000);
+        updateServerTime();
+        
+        // Load directory on page load
+        document.addEventListener('DOMContentLoaded', loadDirectory);
     </script>
 </body>
 </html>
