@@ -1,0 +1,13 @@
+Create www/test.txt
+This is a test text file served by the C++ HTTP server.
+
+You can use this to test:
+1. Plain text file serving
+2. MIME type detection
+3. File reading capabilities
+
+Server features:
+- Multi-threading
+- Configurable settings
+- Logging
+- Error handling
