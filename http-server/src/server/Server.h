@@ -14,6 +14,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <functional>
+#include <ctime>
 
 class HttpServer {
 private:
@@ -76,9 +77,13 @@ private:
     Config config;
     std::atomic<bool> running;
     std::string webRoot;
+    std::chrono::steady_clock::time_point startTime;
     
 public:
-    HttpServer() : running(false) {}
+    HttpServer() : running(false) {
+        startTime = std::chrono::steady_clock::now();
+    }
+    
     ~HttpServer() { stop(); }
     
     bool initialize(const std::string& configPath = "") {
@@ -120,8 +125,13 @@ public:
             
             // Create web root directory if it doesn't exist
             if (!FileHandler::isDirectory(webRoot)) {
-                // Create directory (you'll need to implement this)
-                Logger::warning("Web root directory doesn't exist: " + webRoot);
+                // Try to create directory
+                #ifdef _WIN32
+                    _mkdir(webRoot.c_str());
+                #else
+                    mkdir(webRoot.c_str(), 0755);
+                #endif
+                Logger::info("Created web root directory: " + webRoot);
             }
             
             Logger::info("Server initialized successfully");
@@ -246,7 +256,30 @@ private:
                 return;
             }
             
+            // Add CORS headers for all responses
+            std::function<void(HttpResponse&)> addCorsHeaders = [](HttpResponse& response) {
+                response.setHeader("Access-Control-Allow-Origin", "*");
+                response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+                response.setHeader("Access-Control-Allow-Headers", "Content-Type");
+            };
+            
+            // Handle OPTIONS request for CORS preflight
+            if (request.getMethod() == HttpMethod::UNKNOWN) {
+                // Check if it's an OPTIONS request
+                std::string methodLine = rawRequest.substr(0, rawRequest.find('\n'));
+                if (methodLine.find("OPTIONS") != std::string::npos) {
+                    HttpResponse optionsResponse;
+                    optionsResponse.setStatusCode(200);
+                    optionsResponse.setStatusMessage("OK");
+                    addCorsHeaders(optionsResponse);
+                    optionsResponse.setHeader("Access-Control-Max-Age", "86400");
+                    sendResponse(clientSocket, optionsResponse.toString());
+                    return;
+                }
+            }
+            
             // Route request based on method
+            HttpResponse response;
             switch (request.getMethod()) {
                 case HttpMethod::GET:
                     handleGet(clientSocket, request);
@@ -260,18 +293,30 @@ private:
                 default:
                     // Send 501 Not Implemented
                     HttpResponse notImplemented = HttpResponse::makeErrorResponse(501, "Not Implemented");
+                    addCorsHeaders(notImplemented);
                     sendResponse(clientSocket, notImplemented.toString());
             }
             
         } catch (const std::exception& e) {
             Logger::error("Error processing request: " + std::string(e.what()));
             HttpResponse error = HttpResponse::makeErrorResponse(500, "Internal Server Error");
+            error.setHeader("Access-Control-Allow-Origin", "*");
             sendResponse(clientSocket, error.toString());
         }
     }
     
     void handleGet(int clientSocket, const HttpRequest& request) {
         std::string path = request.getPath();
+        
+        // Handle API routes
+        if (path == "/api/directory") {
+            handleApiDirectory(clientSocket);
+            return;
+        }
+        else if (path == "/api/status") {
+            handleApiStatus(clientSocket);
+            return;
+        }
         
         // Default to index.html if root path
         if (path == "/") {
@@ -283,12 +328,14 @@ private:
         
         if (!FileHandler::isPathSafe(webRoot, filePath)) {
             HttpResponse response = HttpResponse::makeErrorResponse(403, "Forbidden");
+            response.setHeader("Access-Control-Allow-Origin", "*");
             sendResponse(clientSocket, response.toString());
             return;
         }
         
         if (!FileHandler::fileExists(filePath)) {
             HttpResponse response = HttpResponse::makeErrorResponse(404, "Not Found");
+            response.setHeader("Access-Control-Allow-Origin", "*");
             sendResponse(clientSocket, response.toString());
             return;
         }
@@ -309,11 +356,13 @@ private:
                 response.setStatusCode(200);
                 response.setStatusMessage("OK");
                 response.setContentType("text/html");
+                response.setHeader("Access-Control-Allow-Origin", "*");
                 response.setBody(listing);
                 sendResponse(clientSocket, response.toString());
                 return;
             } else {
                 HttpResponse response = HttpResponse::makeErrorResponse(403, "Forbidden");
+                response.setHeader("Access-Control-Allow-Origin", "*");
                 sendResponse(clientSocket, response.toString());
                 return;
             }
@@ -326,17 +375,26 @@ private:
         response.setStatusMessage("OK");
         response.setContentType(FileHandler::getMimeType(filePath));
         response.setHeader("Content-Length", std::to_string(fileContent.size()));
+        response.setHeader("Access-Control-Allow-Origin", "*");
         response.setBody(fileContent);
         
         sendResponse(clientSocket, response.toString());
     }
     
     void handlePost(int clientSocket, const HttpRequest& request) {
-        // Simple echo server for now
+        std::string path = request.getPath();
+        
+        if (path == "/api/test") {
+            handleApiTest(clientSocket, request);
+            return;
+        }
+        
+        // Simple echo server for other POST requests
         HttpResponse response;
         response.setStatusCode(200);
         response.setStatusMessage("OK");
         response.setContentType("text/plain");
+        response.setHeader("Access-Control-Allow-Origin", "*");
         response.setBody("Received POST request with body: " + request.getBody());
         
         sendResponse(clientSocket, response.toString());
@@ -353,6 +411,7 @@ private:
         
         if (!FileHandler::isPathSafe(webRoot, filePath) || !FileHandler::fileExists(filePath)) {
             HttpResponse response = HttpResponse::makeErrorResponse(404, "Not Found");
+            response.setHeader("Access-Control-Allow-Origin", "*");
             sendResponse(clientSocket, response.toString());
             return;
         }
@@ -362,7 +421,97 @@ private:
         response.setStatusMessage("OK");
         response.setContentType(FileHandler::getMimeType(filePath));
         response.setHeader("Content-Length", std::to_string(FileHandler::getFileSize(filePath)));
+        response.setHeader("Access-Control-Allow-Origin", "*");
         
+        sendResponse(clientSocket, response.toString());
+    }
+    
+    void handleApiDirectory(int clientSocket) {
+        try {
+            std::vector<std::string> files = FileHandler::listDirectory(webRoot);
+            
+            std::string json = "[\n";
+            for (size_t i = 0; i < files.size(); ++i) {
+                std::string fileName = files[i];
+                std::string filePath = webRoot + "/" + fileName;
+                
+                // Remove trailing slash from directory names
+                if (fileName.back() == '/') {
+                    fileName = fileName.substr(0, fileName.length() - 1);
+                }
+                
+                bool isDir = FileHandler::isDirectory(filePath);
+                size_t size = isDir ? 0 : FileHandler::getFileSize(filePath);
+                
+                json += "  {\"name\": \"" + escapeJsonString(fileName) + "\", ";
+                json += "\"path\": \"" + escapeJsonString(fileName) + "\", ";
+                json += "\"isDirectory\": " + (isDir ? "true" : "false") + ", ";
+                json += "\"size\": " + std::to_string(size) + "}";
+                
+                if (i < files.size() - 1) {
+                    json += ",\n";
+                }
+            }
+            json += "\n]";
+            
+            HttpResponse response;
+            response.setStatusCode(200);
+            response.setStatusMessage("OK");
+            response.setContentType("application/json");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            response.setBody(json);
+            sendResponse(clientSocket, response.toString());
+            
+        } catch (const std::exception& e) {
+            Logger::error("Error generating directory listing: " + std::string(e.what()));
+            HttpResponse response = HttpResponse::makeErrorResponse(500, "Internal Server Error");
+            response.setHeader("Access-Control-Allow-Origin", "*");
+            sendResponse(clientSocket, response.toString());
+        }
+    }
+    
+    void handleApiStatus(int clientSocket) {
+        auto now = std::chrono::steady_clock::now();
+        auto uptime = std::chrono::duration_cast<std::chrono::seconds>(now - startTime);
+        
+        int hours = uptime.count() / 3600;
+        int minutes = (uptime.count() % 3600) / 60;
+        int seconds = uptime.count() % 60;
+        
+        char uptimeStr[9];
+        snprintf(uptimeStr, sizeof(uptimeStr), "%02d:%02d:%02d", hours, minutes, seconds);
+        
+        std::string json = "{";
+        json += "\"status\": \"running\", ";
+        json += "\"port\": " + std::to_string(config.getInt("server.port", 8080)) + ", ";
+        json += "\"webRoot\": \"" + escapeJsonString(webRoot) + "\", ";
+        json += "\"threads\": " + std::to_string(config.getInt("server.max_threads", 4)) + ", ";
+        json += "\"uptime\": \"" + std::string(uptimeStr) + "\"";
+        json += "}";
+        
+        HttpResponse response;
+        response.setStatusCode(200);
+        response.setStatusMessage("OK");
+        response.setContentType("application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setBody(json);
+        sendResponse(clientSocket, response.toString());
+    }
+    
+    void handleApiTest(int clientSocket, const HttpRequest& request) {
+        std::string jsonResponse = "{";
+        jsonResponse += "\"status\": \"success\", ";
+        jsonResponse += "\"message\": \"POST request received\", ";
+        jsonResponse += "\"receivedBody\": \"" + escapeJsonString(request.getBody()) + "\", ";
+        jsonResponse += "\"timestamp\": \"" + getCurrentTimestamp() + "\"";
+        jsonResponse += "}";
+        
+        HttpResponse response;
+        response.setStatusCode(200);
+        response.setStatusMessage("OK");
+        response.setContentType("application/json");
+        response.setHeader("Access-Control-Allow-Origin", "*");
+        response.setBody(jsonResponse);
         sendResponse(clientSocket, response.toString());
     }
     
@@ -399,5 +548,29 @@ private:
         html += "</body></html>";
         
         return html;
+    }
+    
+    std::string escapeJsonString(const std::string& str) {
+        std::string result;
+        for (char c : str) {
+            switch (c) {
+                case '"': result += "\\\""; break;
+                case '\\': result += "\\\\"; break;
+                case '\b': result += "\\b"; break;
+                case '\f': result += "\\f"; break;
+                case '\n': result += "\\n"; break;
+                case '\r': result += "\\r"; break;
+                case '\t': result += "\\t"; break;
+                default: result += c; break;
+            }
+        }
+        return result;
+    }
+    
+    std::string getCurrentTimestamp() {
+        time_t now = time(nullptr);
+        char buffer[80];
+        strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", localtime(&now));
+        return std::string(buffer);
     }
 };
